@@ -16,7 +16,7 @@ public class TestController {
     }
 
     @RequestMapping(value = "/test")
-    public String test() {
-        return components.test();
+    public String test(String args) {
+        return components.test(args);
     }
 }

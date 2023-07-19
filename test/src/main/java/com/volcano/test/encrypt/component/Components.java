@@ -16,7 +16,7 @@ public class Components {
     @Autowired
     private ITest iTest;
 
-    public String test(){
-       return iTest.test("this is implement into args ");
+    public String test(String args){
+       return iTest.test(args);
     }
 }
