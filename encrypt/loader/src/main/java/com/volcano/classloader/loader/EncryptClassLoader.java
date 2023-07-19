@@ -5,6 +5,7 @@ import com.volcano.classloader.config.Encrypt;
 import com.volcano.classloader.des.Use3DES;
 import com.volcano.classloader.util.LoaderUtil;
 import com.volcano.classloader.util.SpringUtil;
+import jodd.util.StringUtil;
 import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -63,11 +64,7 @@ public class EncryptClassLoader extends URLClassLoader {
         super(urls, parent);
     }
 
-    public static synchronized EncryptClassLoader getInstance(Encrypt encrypt, final ClassLoader classLoader) {
-        if (INSTANCE == null) {
-            INSTANCE = (EncryptClassLoader) getInstance(classLoader);
-        }
-
+    public static synchronized EncryptClassLoader getInstance() {
         return INSTANCE;
     }
 
@@ -81,9 +78,9 @@ public class EncryptClassLoader extends URLClassLoader {
         final File[] files = LoaderUtil.addJarLibUrls(Files);
         return AccessController.doPrivileged((PrivilegedAction<EncryptClassLoader>) () -> {
                     URL[] sourceUrls = pathToURLs(files, false);
-                    URL[] urls = path == null ? new URL[0] : pathToURLs(files, true);
-                    LoaderUtil.processParentClassLoaderUrls(urls, sourceUrls, classLoader);
-                    INSTANCE = new EncryptClassLoader(urls, classLoader);
+                    URL[] encryptUrls = StringUtil.isEmpty(path) ? new URL[0] : pathToURLs(files, true);
+                    LoaderUtil.processParentClassLoaderUrls(encryptUrls, sourceUrls, classLoader);
+                    INSTANCE = new EncryptClassLoader(encryptUrls, classLoader);
                     Thread.currentThread().setContextClassLoader(INSTANCE);
                     return INSTANCE;
                 }
@@ -101,11 +98,9 @@ public class EncryptClassLoader extends URLClassLoader {
     public void loadClasses2Cache() {
         URL[] urls = this.getURLs();
         if (urls != null) {
-
             for (URL url : urls) {
                 // 系统类库路径
                 File libPath = new File(URLDecoder.decode(url.getPath(), "utf-8"));
-
                 // 获取所有的.jar和.zip文件
                 File[] jarFiles = null;
                 if (libPath.isDirectory()) {
@@ -129,6 +124,7 @@ public class EncryptClassLoader extends URLClassLoader {
                     // 从URLClassLoader类中获取类所在文件夹的方法
                     // 对于jar文件，可以理解为一个存放class文件的文件夹
                     try {
+                        CountDownLatch latch = new CountDownLatch(jarFiles.length);
                         Arrays.stream(jarFiles).parallel().forEach(
                                 file -> {
                                     Long lastModify = fileModify.get(file);
@@ -137,8 +133,11 @@ public class EncryptClassLoader extends URLClassLoader {
                                         scanClassJar(file);
                                     }
 
+                                    latch.countDown();
                                 }
                         );
+
+                        latch.await();
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -154,6 +153,7 @@ public class EncryptClassLoader extends URLClassLoader {
         }
     }
 
+    @SneakyThrows
     private void listFileByDir(String rootPath, File dir) {
         for (File file : dir.listFiles()) {
             if (file.isDirectory()) {
@@ -245,6 +245,12 @@ public class EncryptClassLoader extends URLClassLoader {
             is.close();
             bis.close();
         }
+
+        return parseClass(oldBytes, name);
+    }
+
+    private Class parseClass(byte[] oldBytes, String name) {
+        byte[] bytes;
         try {
             bytes = Use3DES.decrypt(key, oldBytes);
         } catch (Exception e) {
@@ -267,13 +273,24 @@ public class EncryptClassLoader extends URLClassLoader {
 
     private static URL[] pathToURLs(File[] files, boolean encryptedCheck) {
         List<URL> urls = new ArrayList<>();
-
+        boolean add = false;
         for (int i = 0; i < files.length; ++i) {
-            if (!encryptedCheck || (encryptedCheck && LoaderUtil.isEncrypted(files[i]))) {
-                urls.add(LoaderUtil.getFileURL(files[i]));
+            add = false;
+            if (encryptedCheck) {
+                if (LoaderUtil.isEncrypted(files[i])) {
+                    add = true;
+                } else {
+                    continue;
+                }
+            } else if (!LoaderUtil.isEncrypted(files[i])) {
+                add = true;
             }
 
+            if (add) {
+                urls.add(LoaderUtil.getFileURL(files[i]));
+            }
         }
+
         return urls.toArray(new URL[urls.size()]);
     }
 

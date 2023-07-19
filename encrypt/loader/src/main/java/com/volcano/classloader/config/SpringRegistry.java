@@ -7,6 +7,7 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 /**
@@ -20,8 +21,7 @@ public class SpringRegistry implements BeanFactoryPostProcessor {
 
     @Override
     public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
-        Encrypt encrypt = FileUtil.loadEncryptByConfig();
-        EncryptClassLoader instance = EncryptClassLoader.getInstance(encrypt, this.getClass().getClassLoader());
+        EncryptClassLoader instance = EncryptClassLoader.getInstance();
         if (instance == null) {
             return;
         }

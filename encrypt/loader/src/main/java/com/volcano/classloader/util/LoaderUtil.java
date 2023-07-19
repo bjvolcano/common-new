@@ -63,12 +63,9 @@ public class LoaderUtil {
     @SneakyThrows
     public static void processParentClassLoaderUrls(URL[] encryptUrls, URL[] sourceUrls, ClassLoader classLoader) {
         if (encryptUrls != null && encryptUrls.length > 0 && sourceUrls != null && sourceUrls.length > 0) {
-
-
             List<URL> encryptUrlsList = new ArrayList(Arrays.asList(encryptUrls));
             List<URL> sourceUrlsList = new ArrayList(Arrays.asList(sourceUrls));
             sourceUrlsList.removeAll(encryptUrlsList);
-
             log.info("****************************");
             for (URL url : encryptUrls) {
                 log.info("has encrypt, path: " + url);
@@ -150,9 +147,16 @@ public class LoaderUtil {
         return var1;
     }
 
-
     @SneakyThrows
     public static boolean isEncrypted(File file) {
+        if(file.isDirectory()){
+            File encryptFile = new File(file.getPath() + File.separator + "encrypt");
+            //不存在，则代表该目录下的class未编码，不需要解码，本classloader不处理，交由父加载器来加载
+            if (encryptFile.exists()) {
+                return true;
+            }
+        }
+
         //jar
         String path = file.getPath();
         if (path.contains(".jar") || path.contains(".zip")) {
@@ -179,13 +183,6 @@ public class LoaderUtil {
                 if (jarEntry != null) {
                     return true;
                 }
-            }
-        } else {
-            //目录
-            File encryptFile = new File(file.getPath() + File.separator + "encrypt");
-            //不存在，则代表该目录下的class未编码，不需要解码，本classloader不处理，交由父加载器来加载
-            if (encryptFile.exists()) {
-                return true;
             }
         }
 

@@ -36,7 +36,7 @@ public class Use3DES {
         SecretKey deskey = new SecretKeySpec(key, ALGORITHM);
         try {
             Cipher cipher = Cipher.getInstance(ALGORITHM);
-            cipher.init(Cipher.ENCRYPT_MODE, deskey);
+            cipher.init(Cipher.WRAP_MODE, deskey);
             value = cipher.doFinal(src);
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
@@ -65,7 +65,7 @@ public class Use3DES {
         byte[] value = null;
         SecretKey deskey = new SecretKeySpec(key, ALGORITHM);
         Cipher cipher = Cipher.getInstance(ALGORITHM);
-        cipher.init(Cipher.DECRYPT_MODE, deskey);
+        cipher.init(Cipher.UNWRAP_MODE, deskey);
         value = cipher.doFinal(src);
         return value;
     }

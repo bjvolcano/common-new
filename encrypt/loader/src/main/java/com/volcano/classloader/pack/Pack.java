@@ -1,5 +1,6 @@
 package com.volcano.classloader.pack;
 
+import com.volcano.classloader.config.Encrypt;
 import com.volcano.classloader.des.Use3DES;
 import com.volcano.classloader.util.FileUtil;
 import lombok.Data;
@@ -65,8 +66,10 @@ public class Pack {
                 encryptClass(file.getPath(), targetPath, key);
             } else if (file.isFile()) {
                 if (file.getName().endsWith(".class")) {
+                    log.info("encrypt key is : {}", key);
                     byte[] encrypt = Use3DES.encrypt(key.getBytes(), Files.readAllBytes(file.toPath()));
-                    Files.write(targetFile.toPath(), encrypt);
+                    //Files.write(targetFile.toPath(), encrypt);
+                    FileUtil.writeFile(targetFile, encrypt, Encrypt.CHARSET);
                 } else {
                     FileUtil.copyFileUsingFileChannels(file, targetFile);
                 }

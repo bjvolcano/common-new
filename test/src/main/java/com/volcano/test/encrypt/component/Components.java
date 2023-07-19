@@ -10,7 +10,6 @@ import org.springframework.stereotype.Component;
  * @Date 2021/5/11 9:41 上午
  * @Version 1.0
  */
-@Lazy
 @Component
 public class Components {
     @Autowired

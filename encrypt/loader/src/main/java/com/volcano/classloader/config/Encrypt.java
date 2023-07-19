@@ -7,15 +7,14 @@ import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.ho.yaml.Yaml;
-import org.springframework.util.ClassUtils;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 
 /**
@@ -27,7 +26,8 @@ import java.util.List;
 @Data
 public class Encrypt {
 
-    public static final String ENCRYPT_FILE = "encrypt.yml";
+    public static final String ENCRYPT_FILE = "/encrypt.yml";
+    public static final String CHARSET = "UTF-8";
     //@Value("${encrypt-classes.libPath:}")
     private String libPath;
 
@@ -35,14 +35,15 @@ public class Encrypt {
     private String key;
 
     //@Value("${encrypt-classes.keyUrl:}")
-    private String keyUrl;
+
+    private Net net = new Net();
 
     private byte[] keyBytes;
 
     public static void load() {
         InputStream inputStream = null;
         try {
-            inputStream = ClassUtils.getDefaultClassLoader().getResource("encrypt.yml").openStream();
+            inputStream = Encrypt.class.getResource(Encrypt.ENCRYPT_FILE).openStream();
             if (inputStream == null) {
                 log.warn("no have encrypt.yml.do not init DesClassLoader!");
                 return;
@@ -62,17 +63,16 @@ public class Encrypt {
 
     @SneakyThrows
     public void fillClassLoader() {
-        if (StringUtils.isEmpty(key) && StringUtils.isEmpty(keyUrl)) {
+        if (StringUtils.isEmpty(key) && StringUtils.isEmpty(net.getUrl())) {
             throw new Exception("please set key or keyurl!");
         }
         if (!StringUtils.isEmpty(key)) {
             keyBytes = key.trim().getBytes();
         } else {
-            HttpClientResult httpClientResult = HttpClientUtils.doPost(keyUrl, null, null);
+            HttpClientResult httpClientResult = HttpClientUtils.doPost(net.getUrl(), null, net.buildPostArgs());
             if (httpClientResult.getCode() != 200) {
                 throw new Exception("获取加密key错误！");
             } else {
-
                 keyBytes = httpClientResult.getContent().getBytes();
             }
         }
@@ -99,8 +99,8 @@ public class Encrypt {
                 }
             }
         }
-        instance.start();
 
+        instance.start();
     }
 
     private List<File> getFiles(File dir, List<File> files) {

@@ -22,7 +22,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
-@Configuration
+//@Configuration
 @Slf4j
 public class RangConfig extends BaseConfig implements WebMvcConfigurer {
 
