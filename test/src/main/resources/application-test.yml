@@ -1,0 +1,19 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/mysql?useUnicode=true&characterEncoding=utf-8&allowMultiQueries=true&autoReconnect=true&failOverReadOnly=false&useSSL=true&serverTimezone=Asia/Shanghai
+    username: root
+    password: root
+    driverClassName: com.mysql.cj.jdbc.Driver
+    type: com.alibaba.druid.pool.DruidDataSource
+
+common:
+  cache:
+    mode: cp  #可不配置，默认cp 强一致
+    lockWaitTime: 500 #可不配置 默认500毫秒
+    #热点key 计算 时间窗口大小  以下配置表示 在60秒内，大于等于 10次，则会加锁，防止在高并发下得缓存击穿
+    hotKeyTime: 60000  #60秒
+    hotKeyCount: 10   #10次
+logging:
+  level:
+    com:
+      volcano: debug

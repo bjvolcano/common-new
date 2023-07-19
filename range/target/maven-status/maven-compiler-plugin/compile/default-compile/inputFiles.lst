@@ -1,0 +1,14 @@
+/Users/volcano/Desktop/workSpase/workSpace/levy-arrears/common/range/src/main/java/com/volcano/range/mapping/ITableMapping.java
+/Users/volcano/Desktop/workSpase/workSpace/levy-arrears/common/range/src/main/java/com/volcano/range/mapping/SourceFromInfo.java
+/Users/volcano/Desktop/workSpase/workSpace/levy-arrears/common/range/src/main/java/com/volcano/range/autoconfigretion/RangeAutoImportSelector.java
+/Users/volcano/Desktop/workSpase/workSpace/levy-arrears/common/range/src/main/java/com/volcano/range/filter/AbstructRangeFilter.java
+/Users/volcano/Desktop/workSpase/workSpace/levy-arrears/common/range/src/main/java/com/volcano/range/autoconfigretion/anno/EnableRangeFilter.java
+/Users/volcano/Desktop/workSpase/workSpace/levy-arrears/common/range/src/main/java/com/volcano/range/dto/IRangeData.java
+/Users/volcano/Desktop/workSpase/workSpace/levy-arrears/common/range/src/main/java/com/volcano/range/filter/MysqlFilter.java
+/Users/volcano/Desktop/workSpase/workSpace/levy-arrears/common/range/src/main/java/com/volcano/range/filter/IRangeFilter.java
+/Users/volcano/Desktop/workSpase/workSpace/levy-arrears/common/range/src/main/java/com/volcano/range/mvc/RangeMVCInterceptor.java
+/Users/volcano/Desktop/workSpase/workSpace/levy-arrears/common/range/src/main/java/com/volcano/range/autoconfigretion/RangeAutoConfig.java
+/Users/volcano/Desktop/workSpase/workSpace/levy-arrears/common/range/src/main/java/com/volcano/range/jpa/JpaInterceptor.java
+/Users/volcano/Desktop/workSpase/workSpace/levy-arrears/common/range/src/main/java/com/volcano/range/dto/AbstractRangeData.java
+/Users/volcano/Desktop/workSpase/workSpace/levy-arrears/common/range/src/main/java/com/volcano/range/mapping/Mapping.java
+/Users/volcano/Desktop/workSpase/workSpace/levy-arrears/common/range/src/main/java/com/volcano/range/mybatis/RangeInterceptor.java

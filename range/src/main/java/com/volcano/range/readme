@@ -1,0 +1,7 @@
+该组件只支持mybatis。
+
+主要去实现ITableMapping、AbstructRangeFilter；在启动类上增加@EnableRangeFilter注解来开启。
+1.ITableMapping实现类主要去实现initMapping方法，在方法中定义哪些表需要增加过滤条件。
+2.AbstructRangeFilter实现类主要去实现getFilterWhereSql方法，在方法中定义sql的过滤条件。
+3.在RangeMVCInterceptor（mvc过滤器）的preHandle方法中收集信息存在ThreadLocal中,在AbstructRangeFilter实现类的getFilterWhereSql方法中拼接过滤条件。
+4.在自动装配类中的initMysqlFilter方法 加入新增 第二部新增的范围过滤器。
