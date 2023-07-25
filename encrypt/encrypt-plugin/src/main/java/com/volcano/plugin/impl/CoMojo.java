@@ -6,12 +6,14 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
 /**
+ *
+ * copy
  * @Author bjvolcano
  * @Date 2021/5/10 6:05 下午
  * @Version 1.0
  */
-@Mojo(name = "copy", threadSafe = true, defaultPhase = LifecyclePhase.PACKAGE, executionStrategy = "always")
-public class CopyJarMojo extends BaseMojo {
+@Mojo(name = "co", defaultPhase = LifecyclePhase.PACKAGE, requiresProject = false)
+public class CoMojo extends BaseMojo {
     @Parameter(property = "jarTargetPath", defaultValue = "")
     private String jarTargetPath;
 

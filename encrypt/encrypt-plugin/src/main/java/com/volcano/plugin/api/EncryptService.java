@@ -1,7 +1,9 @@
 package com.volcano.plugin.api;
 
+import com.volcano.classloader.config.Encrypt;
 import com.volcano.classloader.pack.Pack;
-import com.volcano.classloader.util.FileUtil;
+import com.volcano.classloader.pack.UnPack;
+import com.volcano.util.IoUtils;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
@@ -17,17 +19,29 @@ public class EncryptService {
 
     private Pack pack = new Pack();
 
-    @SneakyThrows
-    public void encryptClasses(String encryptPath, String key) {
-        try {
-            log.info("encrypt class start....\n\n");
-            pack.encryptClasses(encryptPath, key);
-            log.info("encrypted class ok!\n\n");
+    private UnPack unPack = new UnPack();
 
+    static {
+        Encrypt.load();
+    }
+
+    @SneakyThrows
+    public void encryptClasses(String encryptPath) {
+        try {
+            log.info("encrypt class start....");
+            pack.encryptClasses(encryptPath);
+            log.info("encrypted class ok!\n\n");
         } catch (Exception e) {
             e.printStackTrace();
             throw e;
         }
+    }
+
+    public void testEncryptClasses(String encryptPath) {
+        String target = encryptPath + File.separator + "target/classes";
+        log.info("deEncrypt class start....");
+        unPack.unEncryptClasses(target, target);
+        log.info("deEncrypt class ok!\n\n");
     }
 
     @SneakyThrows
@@ -54,7 +68,7 @@ public class EncryptService {
                     dest.delete();
                 }
                 log.info("copy file [" + source.getPath() + "] to " + targetPath);
-                FileUtil.copyFileUsingFileChannels(source, dest);
+                IoUtils.copyFileUsingFileChannels(source, dest);
             }
         }
     }

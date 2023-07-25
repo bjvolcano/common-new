@@ -1,14 +1,19 @@
 package com.volcano.test;
+
 import com.volcano.classloader.config.Encrypt;
+import com.volcano.classloader.loader.EncryptClassLoader;
+import lombok.SneakyThrows;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-@SpringBootApplication(scanBasePackages = {"com.volcano.classloader.config",
-        "com.volcano.apis",
-        "com.volcano.interfaces"})
+@SpringBootApplication(scanBasePackages = {
+        "com.volcano.test",
+        "com.volcano.classloader.config",
+})
 public class TestApplication {
+
+    @SneakyThrows
     public static void main(String[] args) {
-        Encrypt.load();
         SpringApplication.run(TestApplication.class, args);
     }
 }

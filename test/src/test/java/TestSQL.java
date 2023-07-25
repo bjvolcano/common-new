@@ -1,8 +1,8 @@
-import com.alibaba.druid.sql.SQLUtils;
 import com.alibaba.druid.sql.ast.SQLExpr;
 import com.alibaba.druid.sql.ast.SQLObject;
 import com.alibaba.druid.sql.ast.expr.*;
 import com.alibaba.druid.sql.ast.statement.*;
+import com.volcano.classloader.config.Encrypt;
 import com.volcano.range.filter.AbstructRangeFilter;
 import com.volcano.range.filter.IRangeFilter;
 import com.volcano.range.filter.MysqlFilter;
@@ -12,24 +12,60 @@ import com.volcano.test.config.range.AdminRangeFilter;
 import com.volcano.test.config.range.UserRangeFilter;
 import com.volcano.test.config.range.UserRangeRangeData;
 import com.volcano.test.config.range.UserTableMapping;
+import lombok.SneakyThrows;
 import org.junit.Test;
 import org.springframework.util.StringUtils;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
 public class TestSQL {
+
+    @SneakyThrows
+    @Test
+    public void testFile() {
+        //String file = "/Users/volcano/Desktop/workSpase/common-new/encrypt/encrypted/target/classes/com/volcano/apis/T.class";
+        //File newFile = new File(file.replace("T.class", "T.class"));
+        /*byte[] bytes = IoUtils.readFileToByte(new File(file));
+
+        byte[] en = EncryptUtils.en(bytes, Encrypt.load().getKeyChars(), 1);
+
+
+        Files.write(newFile.toPath(), en);
+*/
+        //byte[] de = EncryptUtils.de(en, Encrypt.getInstance().getKeyChars(), 1);
+        //byte[] fileDe = EncryptUtils.de(Files.readAllBytes(newFile.toPath()), Encrypt.getInstance().getKeyChars(), 1);
+
+        //System.out.println(new String(fileDe));
+       /* byte[] c = new byte[0];
+        Files.write(new File("/Users/volcano/Desktop/workSpase/common-new/encrypt/encrypted/target/classes/encrypt").toPath(), c);
+        */
+
+        Encrypt.load();
+
+        Class cls1 = this.getClass().getClassLoader().loadClass("com.volcano.apis.Test");
+        Object o = cls1.newInstance();
+        Method method = cls1.getMethod("test");
+        method.invoke(o, "123213");
+
+        Object test = cls1.newInstance();
+
+        System.out.println(test);
+
+
+    }
 
     @Test
     public void testDruidParserSql() {
 
         UserRangeRangeData userRangeRangeData = new UserRangeRangeData();
         userRangeRangeData.set(1L);
-        MysqlFilter filter=new MysqlFilter();
+        MysqlFilter filter = new MysqlFilter();
         IRangeFilter iRangeFilter = new UserRangeFilter(userRangeRangeData);
         List<Mapping> mappings = new ArrayList<>();
         //mappings.add(new Mapping("排除得表",""));
-        ITableMapping exclude=new UserTableMapping();
+        ITableMapping exclude = new UserTableMapping();
         exclude.setMappings(mappings);
         ((AbstructRangeFilter) iRangeFilter).setExclude(exclude);
         filter.addFilter(iRangeFilter);
@@ -38,8 +74,8 @@ public class TestSQL {
         System.out.println(userId);
         AdminRangeFilter adminRangeFilter = new AdminRangeFilter(userRangeRangeData);
         List<Mapping> mappings1 = new ArrayList<>();
-        mappings1.add(new Mapping("sys_user","user_id"));
-        UserTableMapping mappingaa=new UserTableMapping();
+        mappings1.add(new Mapping("sys_user", "user_id"));
+        UserTableMapping mappingaa = new UserTableMapping();
         mappingaa.setMappings(mappings1);
         ((AbstructRangeFilter) adminRangeFilter).setMapping(mappingaa);
         filter.addFilter(adminRangeFilter);

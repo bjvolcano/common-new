@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.volcano</groupId>
         <artifactId>common</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
+        <version>1.0-SNAPSHOT</version>
     </parent>
     <groupId>com.volcano</groupId>
     <artifactId>encrypt</artifactId>
@@ -17,6 +17,7 @@
         <module>loader</module>
         <module>encrypted</module>
         <module>encrypt-plugin</module>
+        <module>encrypt-key</module>
     </modules>
     <dependencies>
         <dependency>

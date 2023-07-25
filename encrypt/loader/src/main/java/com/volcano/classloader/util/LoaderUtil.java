@@ -3,16 +3,20 @@ package com.volcano.classloader.util;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.ho.yaml.Yaml;
+import org.springframework.boot.loader.LaunchedURLClassLoader;
 import org.springframework.boot.loader.jar.JarFile;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.CollectionUtils;
+import sun.misc.URLClassPath;
 import sun.net.www.ParseUtil;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.AccessControlContext;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -27,7 +31,6 @@ import java.util.zip.ZipEntry;
 @Slf4j
 public class LoaderUtil {
     public static File[] addJarLibUrls(File[] files) {
-
         URL path = ClassUtils.getDefaultClassLoader().getResource("");
         boolean isJarRun = path.getPath().contains(".jar");
         if (isJarRun) {
@@ -68,26 +71,37 @@ public class LoaderUtil {
             sourceUrlsList.removeAll(encryptUrlsList);
             log.info("****************************");
             for (URL url : encryptUrls) {
-                log.info("has encrypt, path: " + url);
+                log.info("has encrypt, path: " + url.getPath());
             }
             log.info("****************************");
 
-//            Field ucpField = classLoader.getClass().getDeclaredField("ucp");
-//            ucpField.setAccessible(true);
-//            URLClassPath oldUcp = (URLClassPath) ucpField.get(classLoader);
-//
-//            Field accFiled = oldUcp.getClass().getDeclaredField("acc");
-//            accFiled.setAccessible(true);
-//            AccessControlContext acc = (AccessControlContext) accFiled.get(oldUcp);
-//
-//            URLClassPath ucp = new URLClassPath(newUrls, acc);
-//            ucpField.set(classLoader, ucp);
-//
-//            Field parentUcp = classLoader.getClass().getSuperclass().getDeclaredField("ucp");
-//            parentUcp.setAccessible(true);
-//            parentUcp.set(classLoader, ucp);
+            log.info("exclude encryptUrls : {}", encryptUrls);
+            Class cls = classLoader.getClass();
+            if (classLoader instanceof LaunchedURLClassLoader) {
+                cls = cls.getSuperclass();
+                log.info("classloader is LaunchedURLClassLoader, change cls : {}", cls);
+            }
 
+            try {
+                Field ucpField = cls.getDeclaredField("ucp");
+                ucpField.setAccessible(true);
+                URLClassPath oldUcp = (URLClassPath) ucpField.get(classLoader);
+                Field accFiled = oldUcp.getClass().getDeclaredField("acc");
+                accFiled.setAccessible(true);
+                AccessControlContext acc = (AccessControlContext) accFiled.get(oldUcp);
+                URLClassPath ucp = new URLClassPath(sourceUrls, acc);
+                ucpField.set(classLoader, ucp);
+                if (classLoader instanceof LaunchedURLClassLoader) {
+                    return;
+                }
 
+                //dev
+                Field parentUcp = cls.getSuperclass().getDeclaredField("ucp");
+                parentUcp.setAccessible(true);
+                parentUcp.set(classLoader, ucp);
+            } catch (Exception e) {
+                log.error("deal parent classloader ucp err ", e);
+            }
         }
     }
 
@@ -149,7 +163,7 @@ public class LoaderUtil {
 
     @SneakyThrows
     public static boolean isEncrypted(File file) {
-        if(file.isDirectory()){
+        if (file.isDirectory()) {
             File encryptFile = new File(file.getPath() + File.separator + "encrypt");
             //不存在，则代表该目录下的class未编码，不需要解码，本classloader不处理，交由父加载器来加载
             if (encryptFile.exists()) {

@@ -1,8 +1,8 @@
 package com.volcano.classloader.pack;
 
 import com.volcano.classloader.config.Encrypt;
-import com.volcano.classloader.des.Use3DES;
-import com.volcano.classloader.util.FileUtil;
+import com.volcano.util.EncryptUtils;
+import com.volcano.util.IoUtils;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
@@ -27,18 +27,16 @@ public class Pack {
      * 默认使用 DESede 方式加密
      *
      * @param modulePath 加密的模块目录
-     * @param key        用于加密的key
      * @throws IOException
      */
-    public void encryptClasses(String modulePath, String key) throws IOException {
+    public void encryptClasses(String modulePath) throws IOException {
         String source = modulePath + File.separator + "target/classes";
         String target = source;
-        encryptClass(source, target, key);
+        encryptClass(source, target);
         //在jar包中增加特殊表示标识文件
         File encryptFile = new File(target + File.separator + "encrypt");
-        FileUtil.writeFile(encryptFile, "");
+        IoUtils.writeFile(encryptFile, "");
         log.info("add encrypt file to target path:{}", encryptFile.getPath());
-
     }
 
     /**
@@ -46,10 +44,9 @@ public class Pack {
      *
      * @param classPath       要加密class所在的path根目录
      * @param classTargetPath 加密后的class输出目录
-     * @param key             加密的可以
      * @throws IOException
      */
-    public void encryptClass(String classPath, String classTargetPath, String key) throws IOException {
+    public void encryptClass(String classPath, String classTargetPath) throws IOException {
         File classRoot = new File(classPath);
         File[] files = classRoot.listFiles();
         if (files == null) {
@@ -63,15 +60,15 @@ public class Pack {
             if (file.isDirectory()) {
                 if (!targetFile.exists())
                     targetFile.mkdirs();
-                encryptClass(file.getPath(), targetPath, key);
+                encryptClass(file.getPath(), targetPath);
             } else if (file.isFile()) {
                 if (file.getName().endsWith(".class")) {
-                    log.info("encrypt key is : {}", key);
-                    byte[] encrypt = Use3DES.encrypt(key.getBytes(), Files.readAllBytes(file.toPath()));
-                    //Files.write(targetFile.toPath(), encrypt);
-                    FileUtil.writeFile(targetFile, encrypt, Encrypt.CHARSET);
+                    byte[] bytes = Files.readAllBytes(file.toPath());
+                    byte[] encrypt = EncryptUtils.confuse(bytes, Encrypt.getInstance().getKey().hashCode(), true);
+                    file.delete();
+                    Files.write(file.toPath(), encrypt);
                 } else {
-                    FileUtil.copyFileUsingFileChannels(file, targetFile);
+                    IoUtils.copyFileUsingFileChannels(file, targetFile);
                 }
             }
         }

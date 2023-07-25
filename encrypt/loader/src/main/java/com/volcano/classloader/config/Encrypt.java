@@ -9,12 +9,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.ho.yaml.Yaml;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
+
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 
 /**
@@ -25,8 +23,8 @@ import java.util.List;
 @Slf4j
 @Data
 public class Encrypt {
+    public static final String ENCRYPT_FILE = "encrypt.yml";
 
-    public static final String ENCRYPT_FILE = "/encrypt.yml";
     public static final String CHARSET = "UTF-8";
     //@Value("${encrypt-classes.libPath:}")
     private String libPath;
@@ -34,60 +32,64 @@ public class Encrypt {
     //@Value("${encrypt-classes.key}")
     private String key;
 
-    //@Value("${encrypt-classes.keyUrl:}")
-
-    private Net net = new Net();
+    private char[] keyChars;
 
     private byte[] keyBytes;
 
-    public static void load() {
-        InputStream inputStream = null;
-        try {
-            inputStream = Encrypt.class.getResource(Encrypt.ENCRYPT_FILE).openStream();
-            if (inputStream == null) {
-                log.warn("no have encrypt.yml.do not init DesClassLoader!");
-                return;
-            }
+    //@Value("${encrypt-classes.keyUrl:}")
+    private Net net = new Net();
 
-        } catch (IOException e) {
-            e.printStackTrace();
+    private static Encrypt INSTANCE;
+
+    public static synchronized Encrypt getInstance() {
+        if (INSTANCE == null) {
+            INSTANCE = load();
         }
 
-        try {
-            Encrypt encrypt = Yaml.loadType(inputStream, Encrypt.class);
-            encrypt.fillClassLoader();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
+        return INSTANCE;
+    }
+
+    @SneakyThrows
+    public static synchronized Encrypt load() {
+        if (INSTANCE != null) {
+            return INSTANCE;
         }
+
+        log.debug("load encrypt config by path : {}", Encrypt.ENCRYPT_FILE);
+        InputStream inputStream = Encrypt.class.getClassLoader().getResourceAsStream(Encrypt.ENCRYPT_FILE);
+        if (inputStream == null) {
+            throw new RuntimeException("no have encrypt.yml , or dependency encrypt-key project , do not init DesClassLoader!");
+        }
+
+        INSTANCE = Yaml.loadType(inputStream, Encrypt.class);
+        INSTANCE.fillClassLoader();
+        return INSTANCE;
     }
 
     @SneakyThrows
     public void fillClassLoader() {
         if (StringUtils.isEmpty(key) && StringUtils.isEmpty(net.getUrl())) {
-            throw new Exception("please set key or keyurl!");
+            throw new RuntimeException("please set key or keyurl!");
         }
+
         if (!StringUtils.isEmpty(key)) {
             keyBytes = key.trim().getBytes();
         } else {
-            HttpClientResult httpClientResult = HttpClientUtils.doPost(net.getUrl(), null, net.buildPostArgs());
-            if (httpClientResult.getCode() != 200) {
-                throw new Exception("获取加密key错误！");
-            } else {
-                keyBytes = httpClientResult.getContent().getBytes();
-            }
+            getKeyByRemote();
         }
 
         setClassLoader();
     }
 
 
+    @SneakyThrows
     private void setClassLoader() {
-        EncryptClassLoader instance = (EncryptClassLoader) EncryptClassLoader.getInstance(this.getClass().getClassLoader());
+        ClassLoader classLoader = this.getClass().getClassLoader();
+        EncryptClassLoader instance = (EncryptClassLoader) EncryptClassLoader.getInstance(classLoader);
         if (instance == null) {
             return;
         }
-        //Thread.currentThread().setContextClassLoader(instance);
-        instance.setKey(keyBytes);
+
         if (!StringUtils.isEmpty(libPath)) {
             File libsPath = new File(libPath);
             if (libsPath.isDirectory()) {
@@ -107,6 +109,7 @@ public class Encrypt {
         if (files == null) {
             files = new ArrayList();
         }
+
         File[] subs = dir.listFiles();
         for (File file : subs) {
             if (file.isDirectory()) {
@@ -118,4 +121,21 @@ public class Encrypt {
         return files;
     }
 
+    public char[] getKeyChars() {
+        if (keyChars == null) {
+            keyChars = key.toCharArray();
+        }
+        return keyChars;
+    }
+
+    public void getKeyByRemote() {
+        HttpClientResult httpClientResult = HttpClientUtils.doPost(net.getUrl(), null, net.buildPostArgs());
+        Integer code = httpClientResult.getCode();
+        if (code != 200) {
+            throw new RuntimeException("remote key server err : " + code);
+        } else {
+            key = httpClientResult.getContent();
+            keyBytes = key.getBytes();
+        }
+    }
 }

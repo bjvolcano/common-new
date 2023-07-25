@@ -7,6 +7,7 @@ import com.volcano.range.filter.MysqlFilter;
 import com.volcano.range.mapping.ITableMapping;
 import com.volcano.range.mapping.Mapping;
 import com.volcano.range.mvc.RangeMVCInterceptor;
+import com.volcano.test.config.Cost;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +23,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
-//@Configuration
+@Configuration
 @Slf4j
 public class RangConfig extends BaseConfig implements WebMvcConfigurer {
 
@@ -58,7 +59,7 @@ public class RangConfig extends BaseConfig implements WebMvcConfigurer {
             for(InterceptorRegistration in : interceptors){
                 HandlerInterceptor interceptor = getInterceptor(in);
                 if(interceptor instanceof RangeMVCInterceptor) {
-                    in.excludePathPatterns("/sys/login", "/sys/code/*");
+                    in.excludePathPatterns(Cost.EXCLUDE_PATHS);
                     log.info("设置数据隔离拦截器 排除地址--->ok");
                 }
             }

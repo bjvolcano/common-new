@@ -1,17 +1,14 @@
 package com.volcano.classloader.loader;
 
-
-import com.volcano.classloader.config.Encrypt;
-import com.volcano.classloader.des.Use3DES;
+import com.volcano.classloader.pack.UnPack;
 import com.volcano.classloader.util.LoaderUtil;
-import com.volcano.classloader.util.SpringUtil;
-import jodd.util.StringUtil;
-import lombok.Data;
+import com.volcano.util.IoUtils;
+import com.volcano.util.SpringContextUtil;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
-
+import org.springframework.boot.loader.LaunchedURLClassLoader;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
@@ -19,7 +16,6 @@ import org.springframework.util.StringUtils;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.net.URLDecoder;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -37,11 +33,7 @@ import java.util.zip.ZipEntry;
  * @Version 1.0
  */
 @Slf4j
-public class EncryptClassLoader extends URLClassLoader {
-
-    // 密钥
-    private byte[] key;
-
+public class EncryptClassLoader extends LaunchedURLClassLoader {
     private static final ScheduledExecutorService checkPool = Executors.newSingleThreadScheduledExecutor();
 
     private static final Map<String, Class> classes = new ConcurrentHashMap();
@@ -51,10 +43,6 @@ public class EncryptClassLoader extends URLClassLoader {
     private static EncryptClassLoader INSTANCE;
 
     private DefaultListableBeanFactory beanFactory;
-
-    public void setKey(byte[] key) {
-        this.key = key;
-    }
 
     public void setBeanFactory(DefaultListableBeanFactory beanFactory) {
         this.beanFactory = beanFactory;
@@ -75,10 +63,18 @@ public class EncryptClassLoader extends URLClassLoader {
 
         final String path = System.getProperty("java.class.path");
         final File[] Files = path == null ? new File[0] : LoaderUtil.getClassPath(path);
-        final File[] files = LoaderUtil.addJarLibUrls(Files);
+        final File[] files;
+        try {
+            files = LoaderUtil.addJarLibUrls(Files);
+        } catch (Exception e) {
+            INSTANCE = new EncryptClassLoader(new URL[0], classLoader);
+            Thread.currentThread().setContextClassLoader(INSTANCE);
+            return INSTANCE;
+        }
+
         return AccessController.doPrivileged((PrivilegedAction<EncryptClassLoader>) () -> {
                     URL[] sourceUrls = pathToURLs(files, false);
-                    URL[] encryptUrls = StringUtil.isEmpty(path) ? new URL[0] : pathToURLs(files, true);
+                    URL[] encryptUrls = StringUtils.isEmpty(path) ? new URL[0] : pathToURLs(files, true);
                     LoaderUtil.processParentClassLoaderUrls(encryptUrls, sourceUrls, classLoader);
                     INSTANCE = new EncryptClassLoader(encryptUrls, classLoader);
                     Thread.currentThread().setContextClassLoader(INSTANCE);
@@ -146,27 +142,31 @@ public class EncryptClassLoader extends URLClassLoader {
         }
     }
 
-
     private void scanClassByDir(String rootPath, File dir) {
         if (LoaderUtil.isEncrypted(dir)) {
             listFileByDir(rootPath, dir);
         }
     }
 
-    @SneakyThrows
     private void listFileByDir(String rootPath, File dir) {
         for (File file : dir.listFiles()) {
             if (file.isDirectory()) {
                 listFileByDir(rootPath, file);
             } else if (file.getName().endsWith(".class")) {
                 String name = file.getPath().replace(rootPath + File.separator, "");
-                try {
-                    unEncryptAndRegistry(new FileInputStream(file), name);
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
+                name = name.replace(".class", "").replaceAll("/", ".");
+                Class cls = findClass(name);
+                if (cls == null) {
+                    try {
+                        // 开始读取文件内容
+                        unEncryptAndRegistry(new FileInputStream(file), name);
+                    } catch (Exception e) {
+                        log.error("unEncrypt class has error : {}", e);
+                    }
                 }
             }
         }
+
     }
 
     @SneakyThrows
@@ -182,37 +182,44 @@ public class EncryptClassLoader extends URLClassLoader {
             } else {
                 jarFile = new JarFile(file);
             }
+
             Enumeration<JarEntry> jarEntrys = jarFile.entries();
             while (jarEntrys.hasMoreElements()) {
                 JarEntry entry = jarEntrys.nextElement();
                 // 简单的判断路径，如果想做到像Spring，Ant-Style格式的路径匹配需要用到正则。
                 String name = entry.getName();
                 if (!entry.isDirectory() && name.endsWith(".class")) {
-
-                    // 开始读取文件内容
-                    InputStream is = jarFile.getInputStream(entry);
-                    unEncryptAndRegistry(is, name);
-
+                    name = name.replace(".class", "").replaceAll("/", ".");
+                    Class cls = findClass(name);
+                    if (cls == null) {
+                        try {
+                            // 开始读取文件内容
+                            InputStream is = jarFile.getInputStream(entry);
+                            unEncryptAndRegistry(is, name);
+                        } catch (Exception e) {
+                            log.error("unEncrypt class has error : {}", e);
+                        }
+                    }
                 }
             }
         }
     }
 
+    @SneakyThrows
     private void unEncryptAndRegistry(InputStream is, String name) {
-        Class aClass = decryptClass(is, name);
-        if (aClass == null) {
+        Class cls = decryptClass(is, name);
+        if (cls == null) {
             return;
         }
-        resolveClass(aClass);
-        name = name.replace(".class", "").replaceAll("/", ".");
-        classes.put(name, aClass);
 
+        classes.put(name, cls);
+        cls = loadClass(name, true);
         if (beanFactory != null) {
             registryBean(name);
         }
+
         log.info("load class {} ", name);
     }
-
 
     /**
      * 向spring容器注入beanDefinition
@@ -221,38 +228,27 @@ public class EncryptClassLoader extends URLClassLoader {
      */
     public void registryBean(String className) {
         Class cla = classes.get(className.replace(".class", "").replaceAll("/", "."));
-        if (SpringUtil.isSpringBeanClass(cla) && beanFactory != null) {
-            BeanDefinition beanDefinition = SpringUtil.buildBeanDefinition(cla);
+        if (SpringContextUtil.isSpringBeanClass(cla) && beanFactory != null) {
+            BeanDefinition beanDefinition = SpringContextUtil.buildBeanDefinition(cla);
             //将变量首字母置小写
             String beanName = StringUtils.uncapitalize(className);
             beanName = beanName.substring(beanName.lastIndexOf(".") + 1);
             beanName = StringUtils.uncapitalize(beanName);
-
             beanFactory.registerBeanDefinition(beanName, beanDefinition);
+            log.info("register to spring : {}", beanName);
         }
     }
 
     @SneakyThrows
-    private Class decryptClass(InputStream is, String name) {
-        byte[] bytes = null, oldBytes = null;
-
-        BufferedInputStream bis = null;
-        try {
-            bis = new BufferedInputStream(is);
-            oldBytes = new byte[bis.available()];
-            bis.read(oldBytes);
-        } finally {
-            is.close();
-            bis.close();
-        }
-
-        return parseClass(oldBytes, name);
+    public Class decryptClass(InputStream is, String name) {
+        byte[] bytes = IoUtils.toBytes(is);
+        return parseClass(bytes, name);
     }
 
     private Class parseClass(byte[] oldBytes, String name) {
         byte[] bytes;
         try {
-            bytes = Use3DES.decrypt(key, oldBytes);
+            bytes = UnPack.deEncrypt(oldBytes);
         } catch (Exception e) {
             //可能在开发环境中运行的时候会重新编译
             bytes = oldBytes;
@@ -261,28 +257,36 @@ public class EncryptClassLoader extends URLClassLoader {
 
         // defineClass方法可以将byte数组转化为一个类的Class对象实例
         //writeClass2RootPath(name,bys);
-        return defineClass(name.replace(".class", "").replaceAll("/", "."), bytes, 0, bytes.length);
+        return defineClass(name, bytes, 0, bytes.length);
     }
 
-
     @Override
-    protected Class findClass(String name) throws ClassNotFoundException {
-        return classes.get(name);
+    protected Class findClass(String name) {
+        synchronized (getClassLoadingLock(name)) {
+            Class cls = null;
+            try {
+                cls = super.findClass(name);
+            } catch (Exception e) {
+
+            }
+
+            if (cls != null) {
+                return cls;
+            }
+
+            return classes.get(name);
+        }
     }
 
 
     private static URL[] pathToURLs(File[] files, boolean encryptedCheck) {
         List<URL> urls = new ArrayList<>();
-        boolean add = false;
+        boolean add;
         for (int i = 0; i < files.length; ++i) {
             add = false;
-            if (encryptedCheck) {
-                if (LoaderUtil.isEncrypted(files[i])) {
-                    add = true;
-                } else {
-                    continue;
-                }
-            } else if (!LoaderUtil.isEncrypted(files[i])) {
+            if (encryptedCheck && LoaderUtil.isEncrypted(files[i])) {
+                add = true;
+            } else if (!encryptedCheck && !LoaderUtil.isEncrypted(files[i])) {
                 add = true;
             }
 
@@ -317,4 +321,5 @@ public class EncryptClassLoader extends URLClassLoader {
             }
         }
     }
+
 }
