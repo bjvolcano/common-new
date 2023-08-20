@@ -413,11 +413,12 @@ public class EncryptUtils {
     }
 
     public static byte[] confuse(byte[] bytes, int hash, boolean en) {
-        for (int i = 0; i < bytes.length; i++) {
-            bytes[i] = (byte) (bytes[i] ^ 0xff);
+        byte[] temp = Arrays.copyOf(bytes, bytes.length);
+        for (int i = 0; i < temp.length; i++) {
+            temp[i] = (byte) (temp[i] ^ 0xff);
         }
 
-        return bytes;
+        return temp;
     }
 
 

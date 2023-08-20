@@ -65,6 +65,8 @@ public class Pack {
                 if (file.getName().endsWith(".class")) {
                     byte[] bytes = Files.readAllBytes(file.toPath());
                     byte[] encrypt = EncryptUtils.confuse(bytes, Encrypt.getInstance().getKey().hashCode(), true);
+                    //log.info("Old bytes : {}", new String(bytes));
+                    //log.info("New bytes : {}", new String(encrypt));
                     file.delete();
                     Files.write(file.toPath(), encrypt);
                 } else {

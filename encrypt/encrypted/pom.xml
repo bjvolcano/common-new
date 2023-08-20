@@ -42,14 +42,6 @@
                         <phase>process-classes</phase>
                         <!--<phase>prepare-package</phase>-->
                     </execution>
-                    <execution>
-                        <id>en-install</id>
-                        <goals>
-                            <goal>en</goal>
-                        </goals>
-                        <phase>install</phase>
-                        <!--<phase>prepare-package</phase>-->
-                    </execution>
                     <!--不复制到其他目录的可以不配置copy，copy需要配合jarTargetPath参数适用-->
                     <!--<execution>
                         <id>co</id>
