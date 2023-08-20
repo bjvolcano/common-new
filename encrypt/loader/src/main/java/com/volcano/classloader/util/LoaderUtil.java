@@ -30,6 +30,8 @@ import java.util.zip.ZipEntry;
  */
 @Slf4j
 public class LoaderUtil {
+    public static ThreadLocal<byte[]> CLASS_FILE_BYTES = new ThreadLocal<>();
+
     public static File[] addJarLibUrls(File[] files) {
         URL path = ClassUtils.getDefaultClassLoader().getResource("");
         boolean isJarRun = path.getPath().contains(".jar");
@@ -63,18 +65,18 @@ public class LoaderUtil {
         return files;
     }
 
-    @SneakyThrows
-    public static void processParentClassLoaderUrls(URL[] encryptUrls, URL[] sourceUrls, ClassLoader classLoader) {
+
+    public static void processParentClassLoaderUrls(URL[] encryptUrls, URL[] sourceUrls, ClassLoader classLoader, ClassLoader encryptClassLoader) {
         if (encryptUrls != null && encryptUrls.length > 0 && sourceUrls != null && sourceUrls.length > 0) {
             List<URL> encryptUrlsList = new ArrayList(Arrays.asList(encryptUrls));
             List<URL> sourceUrlsList = new ArrayList(Arrays.asList(sourceUrls));
             sourceUrlsList.removeAll(encryptUrlsList);
-            log.info("****************************");
-            for (URL url : encryptUrls) {
-                log.info("has encrypt, path: " + url.getPath());
-            }
-            log.info("****************************");
-
+            URL[] excludeEncryptUrls = sourceUrlsList.toArray(new URL[sourceUrlsList.size()]);
+//            log.info("****************************");
+//            for (URL url : encryptUrls) {
+//                log.info("has encrypt, path: " + url.getPath());
+//            }
+//            log.info("****************************");
             log.info("exclude encryptUrls : {}", encryptUrls);
             Class cls = classLoader.getClass();
             if (classLoader instanceof LaunchedURLClassLoader) {
@@ -89,8 +91,9 @@ public class LoaderUtil {
                 Field accFiled = oldUcp.getClass().getDeclaredField("acc");
                 accFiled.setAccessible(true);
                 AccessControlContext acc = (AccessControlContext) accFiled.get(oldUcp);
-                URLClassPath ucp = new URLClassPath(sourceUrls, acc);
+                URLClassPath ucp = new URLClassPath(excludeEncryptUrls, acc);
                 ucpField.set(classLoader, ucp);
+                //setParent(cls, classLoader, encryptClassLoader);
                 if (classLoader instanceof LaunchedURLClassLoader) {
                     return;
                 }
@@ -99,9 +102,24 @@ public class LoaderUtil {
                 Field parentUcp = cls.getSuperclass().getDeclaredField("ucp");
                 parentUcp.setAccessible(true);
                 parentUcp.set(classLoader, ucp);
-            } catch (Exception e) {
-                log.error("deal parent classloader ucp err ", e);
+            } catch (NoSuchFieldException e) {
+                log.error("NoSuchFieldException", e);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
             }
+        }
+    }
+
+    private static void setParent(Class cls, ClassLoader classLoader, ClassLoader parentClassloader) {
+        Field parent = null;
+        try {
+            parent = cls.getDeclaredField("parent");
+            parent.setAccessible(true);
+            parent.set(classLoader, parentClassloader);
+        } catch (NoSuchFieldException e) {
+            setParent(ClassLoader.class, classLoader, parentClassloader);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
         }
     }
 

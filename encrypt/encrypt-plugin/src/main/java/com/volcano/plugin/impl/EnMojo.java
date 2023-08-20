@@ -9,7 +9,7 @@ import org.apache.maven.plugins.annotations.Mojo;
  *
  */
 
-@Mojo(name = "en", defaultPhase = LifecyclePhase.PROCESS_CLASSES)
+@Mojo(name = "en")
 public class EnMojo extends BaseMojo {
     @Override
     @SneakyThrows

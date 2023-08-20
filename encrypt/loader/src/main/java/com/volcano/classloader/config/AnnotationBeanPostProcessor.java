@@ -1,6 +1,9 @@
 package com.volcano.classloader.config;
 
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.support.RootBeanDefinition;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.annotation.ScheduledAnnotationBeanPostProcessor;
@@ -9,11 +12,12 @@ import org.springframework.stereotype.Component;
 import java.lang.reflect.Method;
 
 @Component
+@Slf4j
 public class AnnotationBeanPostProcessor extends ScheduledAnnotationBeanPostProcessor {
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
         super.onApplicationEvent(event);
-        System.out.println(event);
+        log.info("ContextRefreshedEvent : {}", event);
     }
 
     @Override

@@ -1,6 +1,5 @@
 package com.volcano.plugin.api;
 
-import com.volcano.classloader.config.Encrypt;
 import com.volcano.classloader.pack.Pack;
 import com.volcano.classloader.pack.UnPack;
 import com.volcano.util.IoUtils;
@@ -20,10 +19,6 @@ public class EncryptService {
     private Pack pack = new Pack();
 
     private UnPack unPack = new UnPack();
-
-    static {
-        Encrypt.load();
-    }
 
     @SneakyThrows
     public void encryptClasses(String encryptPath) {

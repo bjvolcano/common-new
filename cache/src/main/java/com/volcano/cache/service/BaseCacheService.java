@@ -146,7 +146,7 @@ public abstract class BaseCacheService implements ICacheService {
 
     private boolean hasWrite() {
         Boolean hasWrite = false;
-        Map<SqlParams, SqlEntity> sqls = (Map) dealSqls.get();
+        Map<SqlParams, SqlEntity> sqls = dealSqls.get();
         if (!CollectionUtils.isEmpty(sqls)) {
             Optional<SqlEntity> write = sqls.values().stream().filter((x) ->
                  !x.isRead()

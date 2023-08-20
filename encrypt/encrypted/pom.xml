@@ -35,20 +35,21 @@
                 <version>1.0-SNAPSHOT</version>
                 <executions>
                     <execution>
-                        <id>en</id>
+                        <id>en-class</id>
                         <goals>
                             <goal>en</goal>
                         </goals>
                         <phase>process-classes</phase>
                         <!--<phase>prepare-package</phase>-->
                     </execution>
-                    <!--<execution>
-                        <id>de</id>
+                    <execution>
+                        <id>en-install</id>
                         <goals>
-                            <goal>de</goal>
+                            <goal>en</goal>
                         </goals>
-                        <phase>prepare-package</phase>
-                    </execution>-->
+                        <phase>install</phase>
+                        <!--<phase>prepare-package</phase>-->
+                    </execution>
                     <!--不复制到其他目录的可以不配置copy，copy需要配合jarTargetPath参数适用-->
                     <!--<execution>
                         <id>co</id>

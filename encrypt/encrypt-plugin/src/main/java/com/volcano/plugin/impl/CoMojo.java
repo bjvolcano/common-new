@@ -12,7 +12,7 @@ import org.apache.maven.plugins.annotations.Parameter;
  * @Date 2021/5/10 6:05 下午
  * @Version 1.0
  */
-@Mojo(name = "co", defaultPhase = LifecyclePhase.PACKAGE, requiresProject = false)
+@Mojo(name = "co")
 public class CoMojo extends BaseMojo {
     @Parameter(property = "jarTargetPath", defaultValue = "")
     private String jarTargetPath;

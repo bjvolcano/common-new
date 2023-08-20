@@ -2,6 +2,7 @@ package com.volcano.test.encrypt.component;
 
 import com.volcano.interfaces.ITest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -16,12 +17,11 @@ import javax.annotation.Resource;
 @Component
 public class Components {
 
-    //@Autowired
-    //private ITest test;
+    @Resource(name = "test")
+    private ITest test;
 
     public String test(String args) {
-        return "";
-        //return test.test(args);
+        return test.test(args);
     }
 
     @PostConstruct

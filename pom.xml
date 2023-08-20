@@ -33,7 +33,7 @@
         <swagger.version>2.7.0</swagger.version>
         <druid.version>1.1.22</druid.version>
         <mybatisplus.version>3.2.0</mybatisplus.version>
-        <spring.cloud.alibaba.version>2.1.2.RELEASE</spring.cloud.alibaba.version>
+        <spring.cloud.alibaba.version>2.1.13.RELEASE</spring.cloud.alibaba.version>
     </properties>
 
     <dependencies>

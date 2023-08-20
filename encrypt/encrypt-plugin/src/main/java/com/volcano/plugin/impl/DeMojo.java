@@ -9,7 +9,7 @@ import org.apache.maven.plugins.annotations.Mojo;
  *
  */
 
-@Mojo(name = "de", defaultPhase = LifecyclePhase.PREPARE_PACKAGE)
+@Mojo(name = "de")
 public class DeMojo extends BaseMojo {
     @Override
     @SneakyThrows

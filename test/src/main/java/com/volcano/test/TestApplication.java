@@ -11,6 +11,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
         "com.volcano.classloader.config",
 })
 public class TestApplication {
+    static {
+        Encrypt.load();
+    }
 
     @SneakyThrows
     public static void main(String[] args) {

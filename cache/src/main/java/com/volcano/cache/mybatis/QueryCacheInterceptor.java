@@ -62,7 +62,7 @@ public class QueryCacheInterceptor extends BaseInterceptor {
         Object args = invocation.getArgs()[1];
         BoundSql boundSql = mappedStatement.getBoundSql(args);
         String format = this.getSql(mappedStatement.getConfiguration(), boundSql);
-        Object result = this.cacheService.getBySqlKey(format, (Object) null, executor);
+        Object result = this.cacheService.getBySqlKey(format, null, executor);
         if (result == null) {
             try {
                 this.cacheService.hotKeyLock(this.cacheService.getKey());
