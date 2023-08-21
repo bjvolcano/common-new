@@ -220,10 +220,10 @@ public class EncryptClassLoader extends URLClassLoader {
         byte[] bytes;
         try {
             bytes = UnPack.deEncrypt(oldBytes);
-        } catch (Exception e) {
+        } catch (Exception | Error e) {
             //可能在开发环境中运行的时候会重新编译
             bytes = oldBytes;
-            log.warn("{} load err! unEncrypt is null", name);
+            log.warn("Load err! unEncrypt is null : {} ", name);
         }
 
         // defineClass方法可以将byte数组转化为一个类的Class对象实例

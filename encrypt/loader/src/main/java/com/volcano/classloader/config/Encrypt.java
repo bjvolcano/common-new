@@ -32,8 +32,6 @@ public class Encrypt {
     //@Value("${encrypt-classes.key}")
     private String key;
 
-    private char[] keyChars;
-
     private byte[] keyBytes;
 
     //@Value("${encrypt-classes.keyUrl:}")
@@ -75,7 +73,8 @@ public class Encrypt {
         if (!StringUtils.isEmpty(key)) {
             keyBytes = key.trim().getBytes();
         } else {
-            getKeyByRemote();
+            key = net.getKeyByRemote();
+            keyBytes = key.getBytes();
         }
 
         setClassLoader();
@@ -118,24 +117,7 @@ public class Encrypt {
                 files.add(file);
             }
         }
+
         return files;
-    }
-
-    public char[] getKeyChars() {
-        if (keyChars == null) {
-            keyChars = key.toCharArray();
-        }
-        return keyChars;
-    }
-
-    public void getKeyByRemote() {
-        HttpClientResult httpClientResult = HttpClientUtils.doPost(net.getUrl(), null, net.buildPostArgs());
-        Integer code = httpClientResult.getCode();
-        if (code != 200) {
-            throw new RuntimeException("remote key server err : " + code);
-        } else {
-            key = httpClientResult.getContent();
-            keyBytes = key.getBytes();
-        }
     }
 }

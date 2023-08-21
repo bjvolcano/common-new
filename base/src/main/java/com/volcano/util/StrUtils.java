@@ -14,6 +14,7 @@ import java.util.regex.Pattern;
  * @author roseboy
  */
 public class StrUtils {
+    public static final String EMPTY = "";
     /**
      * 逗号分割的字符串转list
      *
