@@ -11,6 +11,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
         "com.volcano.classloader.config",
 })
 public class TestApplication {
+    //自定义类加载器加载加密的class
     static {
         Encrypt.load();
     }
