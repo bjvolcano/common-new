@@ -126,7 +126,7 @@ public class HttpClientUtils {
      * @return
      * @throws Exception
      */
-    public static HttpClientResult doPost(String url) {
+    public static HttpClientResult doPost(String url) throws Exception {
         return doPost(url, null, null);
     }
 
@@ -139,14 +139,7 @@ public class HttpClientUtils {
      * @throws Exception
      */
     public static HttpClientResult doPost(String url, Map<String, String> params) throws Exception {
-        HttpClientResult result = new HttpClientResult(0);
-        try {
-            result = doPost(url, null, params);
-        }catch (Exception e){
-            log.error("Post connection error : {}", e);
-        }
-
-        return result;
+        return doPost(url, null, params);
     }
 
     /**

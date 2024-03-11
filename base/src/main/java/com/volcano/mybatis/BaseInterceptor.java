@@ -26,6 +26,14 @@ import java.util.regex.Matcher;
 @Slf4j
 public abstract class BaseInterceptor implements Interceptor,Comparable<BaseInterceptor> {
 
+    protected static final String N = "\n";
+
+    protected static final String T = "\t";
+
+    protected static final String SPACE = " ";
+
+    protected static final String EMPTY = "";
+
     //优先级 越低排越前
     protected Integer sort=0;
 
@@ -127,6 +135,44 @@ public abstract class BaseInterceptor implements Interceptor,Comparable<BaseInte
         return sql;
     }
 
+    /**
+     * 进行？的替换
+     *
+     * @param configuration
+     * @param boundSql
+     * @return
+     */
+    public String getSql4Oracle(Configuration configuration, BoundSql boundSql) throws SQLException {
+        // 获取参数
+        Object parameterObject = boundSql.getParameterObject();
+        List<ParameterMapping> parameterMappings = boundSql
+                .getParameterMappings();
+        // sql语句中多个空格都用一个空格代替
+        String sql = SQLUtils.formatMySql(boundSql.getSql().replaceAll(T,SPACE).replaceAll(N,SPACE));
+//        String replace="like \"%\" *?";
+//        System.out.println(replace);
+//        sql = sql.replaceAll(replace, "concat(concat('%',?),'%')");
+        if (!CollectionUtils.isEmpty(parameterMappings)) {
+            TypeHandlerRegistry typeHandlerRegistry = configuration.getTypeHandlerRegistry();
+            for (ParameterMapping parameterMapping : parameterMappings) {
+                String propertyName = parameterMapping.getProperty();
+                Object value;
+                if (boundSql.hasAdditionalParameter(propertyName)) { // issue #448 ask first for additional params
+                    value = boundSql.getAdditionalParameter(propertyName);
+                } else if (parameterObject == null) {
+                    value = null;
+                } else if (typeHandlerRegistry.hasTypeHandler(parameterObject.getClass())) {
+                    value = parameterObject;
+                } else {
+                    MetaObject metaObject = configuration.newMetaObject(parameterObject);
+                    value = metaObject.getValue(propertyName);
+                }
+                sql = sql.replaceFirst("\\?", Matcher.quoteReplacement(MybatisParamsUtil.getParameterValue4Oracle(value)));
+            }
+        }
+        return sql;
+    }
+
     private String getOperateType(Invocation invocation) {
         final Object[] args = invocation.getArgs();
         MappedStatement ms = (MappedStatement) args[0];
@@ -146,4 +192,7 @@ public abstract class BaseInterceptor implements Interceptor,Comparable<BaseInte
         return null;
     }
 
+    public void remove(){
+
+    }
 }

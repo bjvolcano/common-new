@@ -6,6 +6,10 @@ import java.util.Locale;
 
 public class MybatisParamsUtil {
 
+    static final String APOSTROPHE_TRANSLATED = "`";
+
+    static final String APOSTROPHE = "'";
+
     /**
      * 如果参数是String，则添加单引号， 如果是日期，则转换为时间格式器并加单引号；
      * 对参数是null和不是null的情况作了处理<br>
@@ -20,6 +24,33 @@ public class MybatisParamsUtil {
         } else if (obj instanceof Date) {
             DateFormat formatter = DateFormat.getDateTimeInstance(DateFormat.DEFAULT, DateFormat.DEFAULT, Locale.CHINA);
             value = "'" + formatter.format(new Date()) + "'";
+        }/*else if(obj instanceof Collection || obj.class.isArray()){
+            value = "'"+String.join("','")+"'";
+        }*/ else {
+            if (obj != null) {
+                value = obj.toString();
+            } else {
+                value = "null";
+            }
+
+        }
+        return value;
+    }
+
+    /**
+     * 如果参数是String，则添加单引号， 如果是日期，则转换为时间格式器并加单引号；
+     * 对参数是null和不是null的情况作了处理<br>
+     *
+     * @param obj
+     * @return
+     */
+    public static String getParameterValue4Oracle(Object obj) {
+        String value = null;
+        if (obj instanceof String) {
+            value = "'" + obj.toString().replaceAll(APOSTROPHE, APOSTROPHE_TRANSLATED) + "'";
+        } else if (obj instanceof Date) {
+            DateFormat formatter = DateFormat.getDateTimeInstance(DateFormat.DEFAULT, DateFormat.DEFAULT, Locale.CHINA);
+            value = "TO_TIMESTAMP('"+formatter.format(new Date())+"', 'YYYY-MM-DD HH24:MI:SS')";
         }/*else if(obj instanceof Collection || obj.class.isArray()){
             value = "'"+String.join("','")+"'";
         }*/ else {

@@ -16,10 +16,10 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
-        <dependency>
+        <!--<dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
+        </dependency>-->
         <dependency>
             <groupId>org.redisson</groupId>
             <artifactId>redisson</artifactId>
@@ -63,14 +63,17 @@
         <dependency>
             <groupId>com.volcano</groupId>
             <artifactId>api</artifactId>
+            <version>1.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.volcano</groupId>
             <artifactId>encrypted</artifactId>
+            <version>1.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.volcano</groupId>
             <artifactId>loader</artifactId>
+            <version>1.0-SNAPSHOT</version>
         </dependency>
         <!--<dependency>
             <groupId>com.alibaba.cloud</groupId>

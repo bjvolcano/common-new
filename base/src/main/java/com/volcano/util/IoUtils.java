@@ -1,6 +1,7 @@
 package com.volcano.util;
 
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.*;
 import java.nio.channels.FileChannel;
@@ -12,6 +13,7 @@ import java.util.zip.CRC32;
  *
  * @author roseboy
  */
+@Slf4j
 public class IoUtils {
 
     /**
@@ -271,6 +273,8 @@ public class IoUtils {
         try (FileOutputStream out = new FileOutputStream(file)) {
             out.write(context.getBytes());
             out.flush();
+        }catch (Exception e){
+            log.error("file not found ", e);
         }
     }
 
